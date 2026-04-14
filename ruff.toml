@@ -1,0 +1,23 @@
+[lint]
+select = [
+    "A",    # flake8-builtins
+    "E",    # pycodestyle Error
+    "F",    # Pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "Q",    # flake8-quotes
+    "W",    # pycodestyle Warning
+    "C90",  # mccabe
+    "TRY",  # tryceratops
+    "RUF",  # ruff-specific rules
+    "FURB", # refurb
+    "PERF", # perflint
+    "S",    # bandit
+    "B",    # bugbear
+    "SIM",  # simplify
+    "PL",   # Pylint
+    "ANN",  # flake8-annotations
+]
+
+[lint.extend-per-file-ignores]
+"tests/*" = ["S101", "ANN201"]

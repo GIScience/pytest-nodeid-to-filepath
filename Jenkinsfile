@@ -1,0 +1,110 @@
+pipeline {
+    agent { label 'worker' }
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
+    environment {
+        REPO_NAME = sh(returnStdout: true, script: 'basename `git remote get-url origin` .git').trim()
+        VERSION = sh(returnStdout: true, script: 'uv version --short').trim()
+        LATEST_AUTHOR = sh(returnStdout: true, script: 'git show -s --pretty=%an').trim()
+        LATEST_COMMIT_ID = sh(returnStdout: true, script: 'git describe --tags --long  --always').trim()
+
+        SNAPSHOT_BRANCH_REGEX = /(^main$)/
+        RELEASE_REGEX = /^([0-9]+(\.[0-9]+)*)(-(RC|beta-|alpha-)[0-9]+)?$/
+        RELEASE_DEPLOY = false
+        SNAPSHOT_DEPLOY = false
+    }
+
+    stages {
+        stage('Install project') {
+            steps {
+                script {
+                    echo REPO_NAME
+                    echo LATEST_AUTHOR
+                    echo LATEST_COMMIT_ID
+
+                    echo env.BRANCH_NAME
+                    echo env.BUILD_NUMBER
+                    echo env.TAG_NAME
+
+                    if (!(VERSION ==~ RELEASE_REGEX || VERSION ==~ /.*-SNAPSHOT$/)) {
+                        echo 'Version:'
+                        echo VERSION
+                        error 'The version declaration is invalid. It is neither a release nor a snapshot.'
+                    }
+                }
+                script {
+                    sh 'uv sync --locked'
+                }
+            }
+            post {
+                failure {
+                  rocket_buildfail()
+                }
+            }
+        }
+
+        stage('Static analysis') {
+            environment {
+                VIRTUAL_ENV="${WORKSPACE}/.venv"
+                PATH="${VIRTUAL_ENV}/bin:${PATH}"
+            }
+            steps {
+                script {
+                    sh 'ruff format --check --diff .'
+                    sh 'ruff check .'
+                    sh 'ty check .'
+                }
+            }
+            post {
+                failure {
+                  rocket_testfail()
+                }
+            }
+        }
+
+        stage('Test') {
+            environment {
+                VIRTUAL_ENV="${WORKSPACE}/.venv"
+                PATH="${VIRTUAL_ENV}/bin:${PATH}"
+            }
+            steps {
+                script {
+                    // run pytest
+                    sh 'pytest tests'
+                    sh 'pytest --markdown-docs -m markdown-docs README.md'
+                    sh 'uv run --python 3.11 pytest'
+                }
+            }
+            post {
+                failure {
+                  rocket_testfail()
+                }
+            }
+        }
+
+        stage('Build and Deploy Package') {
+            when {
+                expression {
+                    return VERSION ==~ RELEASE_REGEX && env.TAG_NAME ==~ RELEASE_REGEX
+                }
+            }
+            steps {
+                script {
+                    sh 'uv build'
+                    withCredentials([string(credentialsId: 'PyPI-API-Token', variable: 'UV_PUBLISH_TOKEN')]) {
+                        sh 'uv publish'
+                    }
+                }
+            }
+        }
+
+        stage('Wrapping Up') {
+            steps {
+                encourage()
+                status_change()
+            }
+        }
+    }
+}

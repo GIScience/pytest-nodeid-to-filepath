@@ -1,0 +1,48 @@
+[project]
+name = "pytest-nodeid-to-filepath"
+version = "0.1.0"
+description = "Get a filepath based on the current Pytest node ID."
+readme = "README.md"
+requires-python = ">=3.11,<3.15"
+license = "LGPL-3.0-only"
+license-files = ["COPYING*"]
+authors = [{ name = "HeiGIT ohsome team", email = "ohsome@heigit.org" }]
+classifiers = [
+  "Framework :: Pytest",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Software Development :: Testing",
+]
+dependencies = [
+  "pytest>=9.0.3",
+]
+
+[project.urls]
+Documentation = "https://github.com/GIScience/pytest-nodeid-to-filepath/blob/main/README.md"
+Homepage = "https://ohsome.org/"
+Issues = "https://github.com/GISciene/pytest-nodeid-to-filepath/issues"
+Repository = "https://github.com/GIScience/pytest-nodeid-to-filepath"
+
+[project.entry-points.pytest11]
+pytest-nodeid-to-filepath = "pytest_nodeid_to_filepath.plugin"
+
+[dependency-groups]
+dev = [
+  "prek>=0.3.8",
+  "pytest-markdown-docs>=0.9.2",
+  "ruff>=0.15.10",
+  "ty>=0.0.29",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.6,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
