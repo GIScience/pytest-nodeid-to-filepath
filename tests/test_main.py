@@ -26,6 +26,18 @@ def test_basic():
     assert path.parent.name == "tests"
 
 
+def test_basic_count():
+    path = get_filepath(count=True)
+    assert path.name == "test_main.py--test_basic_count"
+    assert path.parent.name == "tests"
+
+
+def test_basic_no_count():
+    path = get_filepath(count=False)
+    assert path.name == "test_main.py--test_basic_no_count"
+    assert path.parent.name == "tests"
+
+
 def test_with_extension():
     path = get_filepath(extension=".txt")
     assert path.name == "test_main.py--test_with_extension.txt"
@@ -38,12 +50,33 @@ def test_with_double_extension():
     assert path.parent.name == "tests"
 
 
+def test_with_extension_and_count():
+    path = get_filepath(extension=".txt", count=True)
+    assert path.name == "test_main.py--test_with_extension_and_count.txt"
+    assert path.parent.name == "tests"
+
+
+def test_with_extension_and_no_count():
+    path = get_filepath(extension=".txt", count=True)
+    assert path.name == "test_main.py--test_with_extension_and_no_count.txt"
+    assert path.parent.name == "tests"
+
+
 def test_two_calls_numbered_names():
     path = get_filepath()
     assert path.name == "test_main.py--test_two_calls_numbered_names"
     assert path.parent.name == "tests"
     path = get_filepath()
     assert path.name == "test_main.py--test_two_calls_numbered_names.2"
+    assert path.parent.name == "tests"
+
+
+def test_two_calls_no_numbered_names():
+    path = get_filepath()
+    assert path.name == "test_main.py--test_two_calls_no_numbered_names"
+    assert path.parent.name == "tests"
+    path = get_filepath(count=False)
+    assert path.name == "test_main.py--test_two_calls_no_numbered_names"
     assert path.parent.name == "tests"
 
 
@@ -100,13 +133,11 @@ def test_with_a_long_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     # fmt: on
 
 
-@pytest.mark.parametrize("param", ["a" * (get_filename_limit() + 1)])
-def test_with_too_long_parameter_name(param: str):
-    # fmt: off
+@pytest.mark.parametrize("_", ["a" * (get_filename_limit() + 1)])
+def test_with_too_long_parameter_name(_: str):
     path = get_filepath()
     assert path.name == "test_main.py--test_with_too_long_parameter_name[2960995929]"
     assert path.parent.name == "tests"
-    # fmt: on
 
 
 class Mydataclass:
@@ -132,4 +163,26 @@ def test_use_params_instead_of_hash(
         "test_main.py--test_use_params_instead_of_hash[my_object0-1-two]",
         "test_main.py--test_use_params_instead_of_hash[my_object1-2-one]",
     )
+    assert path.parent.name == "tests"
+
+
+@pytest.mark.parametrize("param", [".", "-", "_"])
+def test_params_with_allowed_chars(param: str):
+    path = get_filepath()
+    assert path.name == f"test_main.py--test_params_with_allowed_chars[{param}]"
+    assert path.parent.name == "tests"
+
+
+@pytest.mark.parametrize("_", [" "])
+def test_params_with_space(_: str):
+    path = get_filepath()
+    assert path.name == "test_main.py--test_params_with_space[_]"
+    assert path.parent.name == "tests"
+
+
+@pytest.mark.parametrize("param", [":"])
+def test_params_with_special_chars(param: str):
+    # Leading to hashing of param
+    path = get_filepath()
+    assert path.name == "test_main.py--test_params_with_special_chars[336475711]"
     assert path.parent.name == "tests"

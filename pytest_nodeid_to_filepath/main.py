@@ -38,8 +38,7 @@ def get_filepath(
         start = node_id.index("[") + 1
         end = node_id.rindex("]")
         params = node_id[start:end]
-        # TODO Support dot and space (to be replace later) in params
-        pattern = "^[A-Za-z0-9_-]*$"  # letters, numbers, underscores and dashes
+        pattern = r"^[A-Za-z0-9\-_. ]*$"  # letter, number, dash, underscore, dot, space
         if re.match(pattern, params) is not None and len(params) <= MAX_PARAM_LEN:
             hash_ = params
         else:
@@ -54,6 +53,7 @@ def get_filepath(
         .replace(" (teardown)", "")
         .replace("::", "--")
         .replace(params, hash_)
+        .replace(" ", "_")
     )
 
     if isinstance(directory, Path):
