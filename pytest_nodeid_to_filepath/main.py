@@ -6,12 +6,13 @@ from pathlib import Path
 ROOT_DIR: Path | None = None
 DIRECTORY: str = ""
 MAX_PARAM_LEN = 40
-FILENAMES: list[str] = []  # keep track of duplicated filenames
+FILEPATHS: list[str] = []  # keep track of duplicated filepaths (without count)
 
 
 def get_filepath(
     extension: str = "",
     directory: str | Path = "",
+    count: bool = True,
 ) -> Path:
     """Get a filepath based on the current Pytest node ID.
 
@@ -21,6 +22,9 @@ def get_filepath(
 
     Optionally the directory argument can be given to resolve the path against
     this directory. The directory needs to be relative to Pytest root.
+
+    The count flag can be used to append the number of calls to `get_filepath`
+    during execution of one test case.
     """
     if isinstance(directory, str) and directory != "":
         directory = Path(directory)
@@ -34,6 +38,7 @@ def get_filepath(
         start = node_id.index("[") + 1
         end = node_id.rindex("]")
         params = node_id[start:end]
+        # TODO Support dot and space (to be replace later) in params
         pattern = "^[A-Za-z0-9_-]*$"  # letters, numbers, underscores and dashes
         if re.match(pattern, params) is not None and len(params) <= MAX_PARAM_LEN:
             hash_ = params
@@ -59,8 +64,12 @@ def get_filepath(
     else:
         filepath = ROOT_DIR / directory / filepath
 
-    count_ = count(filepath.name + extension)  # With extension but without count
-    return filepath.parent / (filepath.name + count_ + extension)
+    if count:
+        filepath_without_count = filepath.parent / (filepath.name + extension)
+        count_ = count_duplicates(filepath_without_count)
+        return filepath.parent / (filepath.name + count_ + extension)
+    else:
+        return filepath.parent / (filepath.name + extension)
 
 
 def mirror_path_to_directory(filepath: Path, directory: Path) -> Path:
@@ -79,13 +88,13 @@ def mirror_path_to_directory(filepath: Path, directory: Path) -> Path:
     return Path(*filepath.parts[i:])
 
 
-def count(file_path: str) -> str:
+def count_duplicates(file_path: Path) -> str:
     """Count generated names which are the same.
 
     This means a filename has been requested multiple times in one test function.
     """
-    FILENAMES.append(file_path)
-    count = FILENAMES.count(file_path)
+    FILEPATHS.append(str(file_path))
+    count = FILEPATHS.count(str(file_path))
     if count == 1:
         return ""
     else:
